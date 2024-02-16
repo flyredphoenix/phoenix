@@ -1,0 +1,14 @@
+{
+  "resourceName": "phoenix",
+  "policyUUID": "1014b999",
+  "bucketName": "phoenixe800866bbfa14e2190d97d3d0665f8a3",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "triggerFunction": "NONE",
+  "groupAccess": {}
+}

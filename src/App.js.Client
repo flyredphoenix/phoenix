@@ -1,7 +1,28 @@
+/*
+import logo from './logo.svg';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+        <h1>Phoenix</h1> 
+        </p>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+*/
+
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import "@aws-amplify/ui-react/styles.css";
-import { getUrl, uploadData, remove } from 'aws-amplify/storage';
+//import { API } from "aws-amplify";
+import { Storage } from "aws-amplify";
 import {
   Button,
   Flex,
@@ -28,34 +49,12 @@ const App = ({ signOut }) => {
     fetchNotes();
   }, []);
 
-async function fetchNotes() {
-  const apiData = await client.graphql({ query: listNotes });
-  const notesFromAPI = apiData.data.listNotes.items;
-  await Promise.all(
-    notesFromAPI.map(async (note) => {
-      /*
-      if (note.image) {
-        const url = await Storage.get(note.name);
-        note.image = url;
-      }
-      */
-      // Generate a image url with check if the image exists in the S3 bucket
-      if (note.image) {
-        const url = await getUrl({
-          key: note.id,
-          options: {
-          validateObjectExistence: true
-          },
-       });
-       note.image = url;
-     }
-      return note;
-    })
-  );
-  setNotes(notesFromAPI);
-}
+  async function fetchNotes() {
+    const apiData = await client.graphql({ query: listNotes });
+    const notesFromAPI = apiData.data.listNotes.items;
+    setNotes(notesFromAPI);
+  }
 
-/*
   async function createNote(event) {
     event.preventDefault();
     const form = new FormData(event.target);
@@ -70,40 +69,19 @@ async function fetchNotes() {
     fetchNotes();
     event.target.reset();
   }
-*/
 
-async function createNote(event) {
-  event.preventDefault();
-  const form = new FormData(event.target);
-  const image = form.get("image");
-  const data = {
-    name: form.get("name"),
-    description: form.get("description"),
-    image: image.name,
-  };
-
-  const result = await client.graphql({
-    query: createNoteMutation,
-    variables: { input: data },
-  });
-  fetchNotes();
-  if (!!data.image) await uploadData({key:result.data.createNote.id, data:image}).result;
-  event.target.reset();
-}
-
-async function deleteNote({ id, name }) {
-  const newNotes = notes.filter((note) => note.id !== id);
-  setNotes(newNotes);
-  await remove({key:id});
-  await client.graphql({
-    query: deleteNoteMutation,
-    variables: { input: { id } },
-  });
-}
+  async function deleteNote({ id }) {
+    const newNotes = notes.filter((note) => note.id !== id);
+    setNotes(newNotes);
+    await client.graphql({
+      query: deleteNoteMutation,
+      variables: { input: { id } },
+    });
+  }
 
   return (
     <View className="App">
-      <Heading level={1}>Notes App</Heading>
+      <Heading level={1}>My Notes App</Heading>
       <View as="form" margin="3rem 0" onSubmit={createNote}>
         <Flex direction="row" justifyContent="center">
           <TextField
@@ -122,7 +100,6 @@ async function deleteNote({ id, name }) {
             variation="quiet"
             required
           />
-         <View name="image" as="input" type="file" style={{ alignSelf: "end" }}/>
           <Button type="submit" variation="primary">
             Create Note
           </Button>
@@ -141,13 +118,6 @@ async function deleteNote({ id, name }) {
               {note.name}
             </Text>
             <Text as="span">{note.description}</Text>
-	    {note.image && (
-             <Image
-               src={note.image}
-               alt={`visual aid for ${notes.name}`}
-               style={{ width: 400 }}
-              />
-            )}
             <Button variation="link" onClick={() => deleteNote(note)}>
               Delete note
             </Button>
